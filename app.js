@@ -36,6 +36,17 @@ const LIST_BOOKS = gql`
   }
 `;
 
+const GET_BOOK = gql`
+  query GetBook($Book: String!) {
+    getBook(Book: $Book) {
+      Book
+      Author
+      Volumes
+      Rating
+    }
+  }
+`;
+
 const CREATE_BOOK = gql`
   mutation CreateBook($Book: String!, $Author: String!, $Volumes: Int, $Rating: Float) {
     createBook(Book: $Book, Author: $Author, Volumes: $Volumes, Rating: $Rating) {
@@ -47,7 +58,7 @@ const CREATE_BOOK = gql`
   }
 `;
 
-// Fetch and display books
+// Fetch and display all books
 const fetchBooks = async () => {
   const result = await client.query({ query: LIST_BOOKS });
   const booksList = document.getElementById('books-list');
@@ -59,7 +70,22 @@ const fetchBooks = async () => {
   });
 };
 
-// Add a book
+// Fetch and display a single book
+const fetchBook = async (bookTitle) => {
+  const result = await client.query({ query: GET_BOOK, variables: { Book: bookTitle } });
+  const singleBook = document.getElementById('single-book');
+  singleBook.innerHTML = '';
+  if (result.data.getBook) {
+    const book = result.data.getBook;
+    const bookItem = document.createElement('div');
+    bookItem.textContent = `${book.Book} by ${book.Author} - Volumes: ${book.Volumes}, Rating: ${book.Rating}`;
+    singleBook.appendChild(bookItem);
+  } else {
+    singleBook.textContent = 'Book not found';
+  }
+};
+
+// Add a new book
 const addBookForm = document.getElementById('add-book-form');
 addBookForm.addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -77,5 +103,13 @@ addBookForm.addEventListener('submit', async (event) => {
   addBookForm.reset();
 });
 
-// Initial fetch of books
+// Handle fetching a single book
+const getBookForm = document.getElementById('get-book-form');
+getBookForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const bookTitle = document.getElementById('get-book').value;
+  fetchBook(bookTitle);
+});
+
+// Initial fetch of all books
 fetchBooks();
