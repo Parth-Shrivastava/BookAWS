@@ -1,9 +1,9 @@
 import { ApolloClient, InMemoryCache, HttpLink, ApolloLink, gql } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 
-// Provided GraphQL endpoint and API key
-const GRAPHQL_ENDPOINT = 'https://odlqrjdtvfbuvjtpxkw3hrxeoq.appsync-api.eu-north-1.amazonaws.com/graphql';
-const API_KEY = 'da2-mzumx42bxrdndp3vjtsiwmttca';
+// Use environment variables for the GraphQL endpoint and API key
+const GRAPHQL_ENDPOINT = process.env.NEXT_PUBLIC_API_ENDPOINT;
+const API_KEY = process.env.NEXT_PUBLIC_API_KEY;
 
 // Create an HTTP link to the GraphQL endpoint
 const httpLink = new HttpLink({ uri: GRAPHQL_ENDPOINT });
@@ -60,28 +60,36 @@ const CREATE_BOOK = gql`
 
 // Fetch and display all books
 const fetchBooks = async () => {
-  const result = await client.query({ query: LIST_BOOKS });
-  const booksList = document.getElementById('books-list');
-  booksList.innerHTML = '';
-  result.data.listBooks.forEach(book => {
-    const bookItem = document.createElement('div');
-    bookItem.textContent = `${book.Book} by ${book.Author} - Volumes: ${book.Volumes}, Rating: ${book.Rating}`;
-    booksList.appendChild(bookItem);
-  });
+  try {
+    const result = await client.query({ query: LIST_BOOKS });
+    const booksList = document.getElementById('books-list');
+    booksList.innerHTML = '';
+    result.data.listBooks.forEach(book => {
+      const bookItem = document.createElement('div');
+      bookItem.textContent = `${book.Book} by ${book.Author} - Volumes: ${book.Volumes}, Rating: ${book.Rating}`;
+      booksList.appendChild(bookItem);
+    });
+  } catch (error) {
+    console.error('Error fetching books:', error);
+  }
 };
 
 // Fetch and display a single book
 const fetchBook = async (bookTitle) => {
-  const result = await client.query({ query: GET_BOOK, variables: { Book: bookTitle } });
-  const singleBook = document.getElementById('single-book');
-  singleBook.innerHTML = '';
-  if (result.data.getBook) {
-    const book = result.data.getBook;
-    const bookItem = document.createElement('div');
-    bookItem.textContent = `${book.Book} by ${book.Author} - Volumes: ${book.Volumes}, Rating: ${book.Rating}`;
-    singleBook.appendChild(bookItem);
-  } else {
-    singleBook.textContent = 'Book not found';
+  try {
+    const result = await client.query({ query: GET_BOOK, variables: { Book: bookTitle } });
+    const singleBook = document.getElementById('single-book');
+    singleBook.innerHTML = '';
+    if (result.data.getBook) {
+      const book = result.data.getBook;
+      const bookItem = document.createElement('div');
+      bookItem.textContent = `${book.Book} by ${book.Author} - Volumes: ${book.Volumes}, Rating: ${book.Rating}`;
+      singleBook.appendChild(bookItem);
+    } else {
+      singleBook.textContent = 'Book not found';
+    }
+  } catch (error) {
+    console.error('Error fetching book:', error);
   }
 };
 
@@ -94,13 +102,16 @@ addBookForm.addEventListener('submit', async (event) => {
   const volumes = parseInt(document.getElementById('volumes').value);
   const rating = parseFloat(document.getElementById('rating').value);
 
-  await client.mutate({
-    mutation: CREATE_BOOK,
-    variables: { Book: book, Author: author, Volumes: volumes, Rating: rating }
-  });
-
-  fetchBooks();
-  addBookForm.reset();
+  try {
+    await client.mutate({
+      mutation: CREATE_BOOK,
+      variables: { Book: book, Author: author, Volumes: volumes, Rating: rating }
+    });
+    fetchBooks();
+    addBookForm.reset();
+  } catch (error) {
+    console.error('Error adding book:', error);
+  }
 });
 
 // Handle fetching a single book
