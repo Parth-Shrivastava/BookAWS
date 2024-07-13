@@ -11,15 +11,31 @@
 </head>
 <body>
   <h1>Books App</h1>
-  <div id="books-list"></div>
-  <h2>Add a Book</h2>
-  <form id="add-book-form">
-    <input type="text" id="book" placeholder="Book" required />
-    <input type="text" id="author" placeholder="Author" required />
-    <input type="number" id="volumes" placeholder="Volumes" />
-    <input type="number" step="0.1" id="rating" placeholder="Rating" />
-    <button type="submit">Add Book</button>
-  </form>
+  
+  <div>
+    <h2>All Books</h2>
+    <div id="books-list"></div>
+  </div>
+
+  <div>
+    <h2>Get a Book</h2>
+    <form id="get-book-form">
+      <input type="text" id="get-book" placeholder="Book Title" required />
+      <button type="submit">Get Book</button>
+    </form>
+    <div id="single-book"></div>
+  </div>
+
+  <div>
+    <h2>Add a Book</h2>
+    <form id="add-book-form">
+      <input type="text" id="book" placeholder="Book" required />
+      <input type="text" id="author" placeholder="Author" required />
+      <input type="number" id="volumes" placeholder="Volumes" />
+      <input type="number" step="0.1" id="rating" placeholder="Rating" />
+      <button type="submit">Add Book</button>
+    </form>
+  </div>
 
   <script src="app.js"></script>
 </body>
