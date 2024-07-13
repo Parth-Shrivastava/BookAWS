@@ -1,11 +1,14 @@
-const { ApolloClient, InMemoryCache, HttpLink, ApolloLink, gql } = apolloClient;
-const { setContext } = apolloLinkContext;
+import { ApolloClient, InMemoryCache, HttpLink, ApolloLink, gql } from '@apollo/client';
+import { setContext } from '@apollo/client/link/context';
 
-const GRAPHQL_ENDPOINT = 'YOUR_GRAPHQL_ENDPOINT';
-const API_KEY = 'YOUR_API_KEY';
+// Provided GraphQL endpoint and API key
+const GRAPHQL_ENDPOINT = 'https://odlqrjdtvfbuvjtpxkw3hrxeoq.appsync-api.eu-north-1.amazonaws.com/graphql';
+const API_KEY = 'da2-mzumx42bxrdndp3vjtsiwmttca';
 
+// Create an HTTP link to the GraphQL endpoint
 const httpLink = new HttpLink({ uri: GRAPHQL_ENDPOINT });
 
+// Add API key to the headers
 const authLink = setContext((_, { headers }) => {
   return {
     headers: {
@@ -15,11 +18,13 @@ const authLink = setContext((_, { headers }) => {
   };
 });
 
+// Create an Apollo Client
 const client = new ApolloClient({
   link: ApolloLink.from([authLink, httpLink]),
   cache: new InMemoryCache()
 });
 
+// Define GraphQL queries and mutations
 const LIST_BOOKS = gql`
   query ListBooks {
     listBooks {
@@ -42,6 +47,7 @@ const CREATE_BOOK = gql`
   }
 `;
 
+// Fetch and display books
 const fetchBooks = async () => {
   const result = await client.query({ query: LIST_BOOKS });
   const booksList = document.getElementById('books-list');
@@ -53,6 +59,7 @@ const fetchBooks = async () => {
   });
 };
 
+// Add a book
 const addBookForm = document.getElementById('add-book-form');
 addBookForm.addEventListener('submit', async (event) => {
   event.preventDefault();
@@ -70,4 +77,5 @@ addBookForm.addEventListener('submit', async (event) => {
   addBookForm.reset();
 });
 
+// Initial fetch of books
 fetchBooks();
