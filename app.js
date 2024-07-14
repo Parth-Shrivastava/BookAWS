@@ -1,126 +1,144 @@
-import { ApolloClient, InMemoryCache, HttpLink, ApolloLink, gql } from '@apollo/client';
-import { setContext } from '@apollo/client/link/context';
+const apiUrl = "https://odlqrjdtvfbuvjtpxkw3hrxeoq.appsync-api.eu-north-1.amazonaws.com/graphql";
+const apiKey = "da2-mzumx42bxrdndp3vjtsiwmttca";
 
-// Use environment variables for the GraphQL endpoint and API key
-const GRAPHQL_ENDPOINT = process.env.NEXT_PUBLIC_API_ENDPOINT;
-const API_KEY = process.env.NEXT_PUBLIC_API_KEY;
+document.addEventListener("DOMContentLoaded", () => {
+    listBooks();
 
-// Create an HTTP link to the GraphQL endpoint
-const httpLink = new HttpLink({ uri: GRAPHQL_ENDPOINT });
-
-// Add API key to the headers
-const authLink = setContext((_, { headers }) => {
-  return {
-    headers: {
-      ...headers,
-      'x-api-key': API_KEY,
-    }
-  };
-});
-
-// Create an Apollo Client
-const client = new ApolloClient({
-  link: ApolloLink.from([authLink, httpLink]),
-  cache: new InMemoryCache()
-});
-
-// Define GraphQL queries and mutations
-const LIST_BOOKS = gql`
-  query ListBooks {
-    listBooks {
-      Book
-      Author
-      Volumes
-      Rating
-    }
-  }
-`;
-
-const GET_BOOK = gql`
-  query GetBook($Book: String!) {
-    getBook(Book: $Book) {
-      Book
-      Author
-      Volumes
-      Rating
-    }
-  }
-`;
-
-const CREATE_BOOK = gql`
-  mutation CreateBook($Book: String!, $Author: String!, $Volumes: Int, $Rating: Float) {
-    createBook(Book: $Book, Author: $Author, Volumes: $Volumes, Rating: $Rating) {
-      Book
-      Author
-      Volumes
-      Rating
-    }
-  }
-`;
-
-// Fetch and display all books
-const fetchBooks = async () => {
-  try {
-    const result = await client.query({ query: LIST_BOOKS });
-    const booksList = document.getElementById('books-list');
-    booksList.innerHTML = '';
-    result.data.listBooks.forEach(book => {
-      const bookItem = document.createElement('div');
-      bookItem.textContent = `${book.Book} by ${book.Author} - Volumes: ${book.Volumes}, Rating: ${book.Rating}`;
-      booksList.appendChild(bookItem);
+    document.getElementById("getBookForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const bookTitle = document.getElementById("getBookTitle").value;
+        const bookAuthor = document.getElementById("getBookAuthor").value;
+        const book = await getBook(bookTitle, bookAuthor);
+        document.getElementById("getBookOutput").innerText = JSON.stringify(book, null, 2);
     });
-  } catch (error) {
-    console.error('Error fetching books:', error);
-  }
-};
 
-// Fetch and display a single book
-const fetchBook = async (bookTitle) => {
-  try {
-    const result = await client.query({ query: GET_BOOK, variables: { Book: bookTitle } });
-    const singleBook = document.getElementById('single-book');
-    singleBook.innerHTML = '';
-    if (result.data.getBook) {
-      const book = result.data.getBook;
-      const bookItem = document.createElement('div');
-      bookItem.textContent = `${book.Book} by ${book.Author} - Volumes: ${book.Volumes}, Rating: ${book.Rating}`;
-      singleBook.appendChild(bookItem);
-    } else {
-      singleBook.textContent = 'Book not found';
-    }
-  } catch (error) {
-    console.error('Error fetching book:', error);
-  }
-};
-
-// Add a new book
-const addBookForm = document.getElementById('add-book-form');
-addBookForm.addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const book = document.getElementById('book').value;
-  const author = document.getElementById('author').value;
-  const volumes = parseInt(document.getElementById('volumes').value);
-  const rating = parseFloat(document.getElementById('rating').value);
-
-  try {
-    await client.mutate({
-      mutation: CREATE_BOOK,
-      variables: { Book: book, Author: author, Volumes: volumes, Rating: rating }
+    document.getElementById("createBookForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const bookTitle = document.getElementById("createBookTitle").value;
+        const bookAuthor = document.getElementById("createBookAuthor").value;
+        const bookVolumes = parseInt(document.getElementById("createBookVolumes").value, 10);
+        const bookRating = parseFloat(document.getElementById("createBookRating").value);
+        const newBook = await createBook(bookTitle, bookAuthor, bookVolumes, bookRating);
+        document.getElementById("createBookOutput").innerText = JSON.stringify(newBook, null, 2);
+        listBooks();
     });
-    fetchBooks();
-    addBookForm.reset();
-  } catch (error) {
-    console.error('Error adding book:', error);
-  }
+
+    document.getElementById("deleteBookForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const bookTitle = document.getElementById("deleteBookTitle").value;
+        const bookAuthor = document.getElementById("deleteBookAuthor").value;
+        const deletedBook = await deleteBook(bookTitle, bookAuthor);
+        document.getElementById("deleteBookOutput").innerText = JSON.stringify(deletedBook, null, 2);
+        listBooks();
+    });
 });
 
-// Handle fetching a single book
-const getBookForm = document.getElementById('get-book-form');
-getBookForm.addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const bookTitle = document.getElementById('get-book').value;
-  fetchBook(bookTitle);
-});
+// Function to fetch a specific book
+async function getBook(book, author) {
+    const query = `
+        query GetBook($Book: String!, $Author: String!) {
+            getBook(Book: $Book, Author: $Author) {
+                Book
+                Author
+                Volumes
+                Rating
+            }
+        }
+    `;
 
-// Initial fetch of all books
-fetchBooks();
+    const variables = { Book: book, Author: author };
+
+    const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "x-api-key": apiKey
+        },
+        body: JSON.stringify({ query, variables })
+    });
+
+    const responseBody = await response.json();
+    return responseBody.data.getBook;
+}
+
+// Function to list all books
+async function listBooks() {
+    const query = `
+        query ListBooks {
+            listBooks {
+                Book
+                Author
+                Volumes
+                Rating
+            }
+        }
+    `;
+
+    const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "x-api-key": apiKey
+        },
+        body: JSON.stringify({ query })
+    });
+
+    const responseBody = await response.json();
+    document.getElementById("listBooksOutput").innerText = JSON.stringify(responseBody.data.listBooks, null, 2);
+}
+
+// Function to create a new book
+async function createBook(book, author, volumes, rating) {
+    const mutation = `
+        mutation CreateBook($Book: String!, $Author: String!, $Volumes: Int, $Rating: Float) {
+            createBook(Book: $Book, Author: $Author, Volumes: $Volumes, Rating: $Rating) {
+                Book
+                Author
+                Volumes
+                Rating
+            }
+        }
+    `;
+
+    const variables = { Book: book, Author: author, Volumes: volumes, Rating: rating };
+
+    const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "x-api-key": apiKey
+        },
+        body: JSON.stringify({ query: mutation, variables })
+    });
+
+    const responseBody = await response.json();
+    return responseBody.data.createBook;
+}
+
+// Function to delete a book
+async function deleteBook(book, author) {
+    const mutation = `
+        mutation DeleteBook($Book: String!, $Author: String!) {
+            deleteBook(Book: $Book, Author: $Author) {
+                Book
+                Author
+                Volumes
+                Rating
+            }
+        }
+    `;
+
+    const variables = { Book: book, Author: author };
+
+    const response = await fetch(apiUrl, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "x-api-key": apiKey
+        },
+        body: JSON.stringify({ query: mutation, variables })
+    });
+
+    const responseBody = await response.json();
+    return responseBody.data.deleteBook;
+}
