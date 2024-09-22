@@ -1,5 +1,5 @@
 const apiUrl = "https://odlqrjdtvfbuvjtpxkw3hrxeoq.appsync-api.eu-north-1.amazonaws.com/graphql";
-const apiKey = "da2-nh2hy3betjdyppzeta6txhgtye";
+const apiKey = "da2-xokwvnro7bhtjawm2pj7j2swma";
 
 document.addEventListener("DOMContentLoaded", () => {
     listBooks();
